@@ -154,17 +154,28 @@ message ShellcodeConfig {
   // Override original entry point (0 = default) (Windows/Donut only)
   uint32 OEP = 9;
 }
-
+//ImplantConfig 植入体配置
 message ImplantConfig {
+  //基本标识信息
   string ID = 1;
   repeated ImplantBuild ImplantBuilds = 2;
   string ImplantProfileID = 3;
+  //beacon行为控制
   bool IsBeacon = 4;
   int64 BeaconInterval = 5;
   int64 BeaconJitter = 6;
-
+//编译目标
   string GOOS = 7;
   string GOARCH = 8;
+//编译行为控制
+// | 字段               | 推测作用                 |
+// | ---------------- | -------------------- |
+// | Debug            | 是否调试构建               |
+// | Evasion          | 启用规避模块               |
+// | ObfuscateSymbols | 混淆符号                 |
+// | SGNEnabled       | 使用 Shikata ga nai 编码 |
+// | GoPackage        | 生成包名                 |
+// | TemplateName     | 使用构建模板               |
 
   bool Debug = 10;
   bool Evasion = 11;
@@ -172,34 +183,52 @@ message ImplantConfig {
   string TemplateName = 13;
   bool SGNEnabled = 14;
   string GoPackage = 15;
-
+//通信通道选择，多协议
   bool IncludeMTLS = 53;
   bool IncludeHTTP = 16;
   bool IncludeWG = 17;
   bool IncludeDNS = 18;
   bool IncludeNamePipe = 19;
   bool IncludeTCP = 20;
-
+//WireGuard 相关，vpn隧道协议
   string WGPeerTunIP = 32;
   uint32 WGKeyExchangePort = 33;
   uint32 WGTcpCommsPort = 34;
-
+//连接健壮性控制
   int64 ReconnectInterval = 40;
   uint32 MaxConnectionErrors = 41;
   int64 PollTimeout = 42;
 
   // c2
+  //| 字段                 | 作用                           |
+// | ------------------ | ---------------------------- |
+// | C2                 | C2 服务器列表                     |
+// | CanaryDomains      | 探测域名（反沙箱）                    |
+// | ConnectionStrategy | 连接策略（failover / round-robin） |
+
   repeated ImplantC2 C2 = 50;
   repeated string CanaryDomains = 51;
   string ConnectionStrategy = 52;
-
+//环境限制（运行 gating）
+// 这是典型的：
+// 执行前环境判断条件
+// 用途：
+// 只在特定域环境运行
+// 指定主机名
+// 指定用户名
+// 指定语言
+// 指定文件存在
+// 指定时间
+// 用于：
+// 规避沙箱
+// 定向投放
   bool LimitDomainJoined = 60;
   string LimitDatetime = 61;
   string LimitHostname = 62;
   string LimitUsername = 63;
   string LimitFileExists = 64;
   string LimitLocale = 65;
-
+//输出形式控制
   OutputFormat Format = 100;
   bool IsSharedLib = 101;
   bool IsService = 103;
@@ -209,7 +238,7 @@ message ImplantConfig {
   repeated string exports = 107;
   ShellcodeConfig ShellcodeConfig = 108;
   ShellcodeEncoder ShellcodeEncoder = 109;
-
+//HTTP C2 细节
   string HTTPC2ConfigName = 150;
   bool NetGoEnabled = 151;
   bool TrafficEncodersEnabled = 152;
@@ -225,7 +254,7 @@ message SpoofMetadataFile {
   string Name = 1;
   bytes Data = 2;
 }
-
+//Windows PE 文件资源目录（.rsrc）结构
 message IMAGE_RESOURCE_DIRECTORY {
   uint32 Characteristics = 1;
   uint32 TimeDateStamp = 2;
@@ -328,9 +357,9 @@ message ExternalImplantBinary {
 }
 
 // Configs of previously built implants
-message ImplantBuilds { 
-  map<string, ImplantConfig> Configs = 1; 
-  map<string, ResourceID> ResourceIDs = 2; 
+message ImplantBuilds {
+  map<string, ImplantConfig> Configs = 1;
+  map<string, ResourceID> ResourceIDs = 2;
   map<string, bool> staged = 3;
 }
 
@@ -366,20 +395,20 @@ message ImplantBuild {
 }
 
 message CompilerTarget {
-  string GOOS = 1;   // The server's OS
+  string GOOS = 1; // The server's OS
   string GOARCH = 2; // The server's Arch
   OutputFormat Format = 3;
 }
 
 message CrossCompiler {
-  string TargetGOOS = 1;   // The server's OS
+  string TargetGOOS = 1; // The server's OS
   string TargetGOARCH = 2; // The server's Arch
   string CCPath = 3;
   string CXXPath = 4;
 }
 
 message Compiler {
-  string GOOS = 1;   // The server's OS
+  string GOOS = 1; // The server's OS
   string GOARCH = 2; // The server's Arch
   repeated CompilerTarget Targets = 3;
   repeated CrossCompiler CrossCompilers = 4;
@@ -476,7 +505,7 @@ message DNSListenerReq {
   bool Canaries = 2;
   string Host = 3;
   uint32 Port = 4;
-  bool EnforceOTP = 6; 
+  bool EnforceOTP = 6;
 }
 
 message HTTPListenerReq {
@@ -533,8 +562,8 @@ message RenameReq {
   string Name = 3;
 }
 
-message GenerateReq { 
-  ImplantConfig Config = 1; 
+message GenerateReq {
+  ImplantConfig Config = 1;
   string Name = 2;
 }
 
@@ -835,7 +864,7 @@ message Builders { repeated Builder Builders = 1; }
 message Builder {
   string Name = 1;
   string OperatorName = 2;
-  string GOOS = 3;   // The builder's OS
+  string GOOS = 3; // The builder's OS
   string GOARCH = 4; // The builder's Arch
   repeated string Templates = 5;
   repeated CompilerTarget Targets = 6;
@@ -954,128 +983,128 @@ enum HashType {
 
   MD4 = 900; // MD4
   // MD5
-  SHA1 = 100;        // SHA1
-  SHA2_224 = 1300;   // SHA2-224
-  SHA2_256 = 1400;   // SHA2-256
-  SHA2_384 = 10800;  // SHA2-384
-  SHA2_512 = 1700;   // SHA2-512
-  SHA3_224 = 17300;  // SHA3-224
-  SHA3_256 = 17400;  // SHA3-256
-  SHA3_384 = 17500;  // SHA3-384
-  SHA3_512 = 17600;  // SHA3-512
+  SHA1 = 100; // SHA1
+  SHA2_224 = 1300; // SHA2-224
+  SHA2_256 = 1400; // SHA2-256
+  SHA2_384 = 10800; // SHA2-384
+  SHA2_512 = 1700; // SHA2-512
+  SHA3_224 = 17300; // SHA3-224
+  SHA3_256 = 17400; // SHA3-256
+  SHA3_384 = 17500; // SHA3-384
+  SHA3_512 = 17600; // SHA3-512
   RIPEMD_160 = 6000; // RIPEMD-160
   BLAKE2B_256 = 600; // BLAKE2b-512
   GOST_R_32_11_2012_256 =
       11700; // GOST R 34.11-2012 (Streebog) 256-bit, big-endian
   GOST_R_32_11_2012_512 =
       11800;                 // GOST R 34.11-2012 (Streebog) 512-bit, big-endian
-  GOST_R_34_11_94 = 6900;    // GOST R 34.11-94
-  GPG = 17010;               // GPG (AES-128/AES-256 (SHA-1($pass)))
-  HALF_MD5 = 5100;           // Half MD5
-  KECCAK_224 = 17700;        // Keccak-224
-  KECCAK_256 = 17800;        // Keccak-256
-  KECCAK_384 = 17900;        // Keccak-384
-  KECCAK_512 = 18000;        // Keccak-512
-  WHIRLPOOL = 6100;          // Whirlpool
-  SIPHASH = 10100;           // SipHash
-  MD5_UTF16LE = 70;          // md5(utf16le($pass))
-  SHA1_UTF16LE = 170;        // sha1(utf16le($pass))
-  SHA256_UTF16LE = 1470;     // sha256(utf16le($pass))
-  SHA384_UTF16LE = 10870;    // sha384(utf16le($pass))
-  SHA512_UTF16LE = 1770;     // sha512(utf16le($pass))
+  GOST_R_34_11_94 = 6900; // GOST R 34.11-94
+  GPG = 17010; // GPG (AES-128/AES-256 (SHA-1($pass)))
+  HALF_MD5 = 5100; // Half MD5
+  KECCAK_224 = 17700; // Keccak-224
+  KECCAK_256 = 17800; // Keccak-256
+  KECCAK_384 = 17900; // Keccak-384
+  KECCAK_512 = 18000; // Keccak-512
+  WHIRLPOOL = 6100; // Whirlpool
+  SIPHASH = 10100; // SipHash
+  MD5_UTF16LE = 70; // md5(utf16le($pass))
+  SHA1_UTF16LE = 170; // sha1(utf16le($pass))
+  SHA256_UTF16LE = 1470; // sha256(utf16le($pass))
+  SHA384_UTF16LE = 10870; // sha384(utf16le($pass))
+  SHA512_UTF16LE = 1770; // sha512(utf16le($pass))
   BLAKE2B_512_PW_SALT = 610; // BLAKE2b-512($pass.$salt)
   BLAKE2B_512_SALT_PW = 620; // BLAKE2b-512($salt.$pass)
-  MD5_PW_SALT = 10;          // md5($pass.$salt)
-  MD5_SALT_PW = 20;          // md5($salt.$pass)
-  MD5_SALT_PW_SALT = 3800;   // md5($salt.$pass.$salt)
-  MD5_SALT_MD5_PW = 3710;    // md5($salt.md5($pass))
+  MD5_PW_SALT = 10; // md5($pass.$salt)
+  MD5_SALT_PW = 20; // md5($salt.$pass)
+  MD5_SALT_PW_SALT = 3800; // md5($salt.$pass.$salt)
+  MD5_SALT_MD5_PW = 3710; // md5($salt.md5($pass))
 
   // ... TODO fill in the rest ...
 
-  CRC32 = 11500;      // CRC32
-  CRC32C = 27900;     // CRC32B
+  CRC32 = 11500; // CRC32
+  CRC32C = 27900; // CRC32B
   CRC64Jones = 28000; // CRC64-Jones
   JAVA_OBJECT = 18700;
-  MURMUR = 25700;      // MurmurHash
-  MURMUR3 = 27800;     // MurmurHash3
-  THREE_DES = 14100;   // 3DES (PT = $salt, key = $pass)
-  DES = 14000;         // DES (PT = $salt, key = $pass)
+  MURMUR = 25700; // MurmurHash
+  MURMUR3 = 27800; // MurmurHash3
+  THREE_DES = 14100; // 3DES (PT = $salt, key = $pass)
+  DES = 14000; // DES (PT = $salt, key = $pass)
   AES_128_ECB = 26401; // AES-128-ECB NOKDF (PT = $salt, key = $pass)
   AES_192_ECB = 26402; //  AES-192-ECB NOKDF (PT = $salt, key = $pass)
   AES_256_ECB = 26403; // AES-256-ECB NOKDF (PT = $salt, key = $pass)
-  CHA_CHA_20 = 15400;  // ChaCha20
-  LINUX_KERNEL_CRYPTO_API_24 = 14500;   // Linux Kernel Crypto API (2.4)
-  SKIP_32 = 14900;                      // Skip32 (PT = $salt, key = $pass)
-  PBKDF2_HMAC_MD5 = 11900;              // PBKDF2-HMAC-MD5
-  PBKDF2_HMAC_SHA1 = 12000;             // PBKDF2-HMAC-SHA1
-  PBKDF2_HMAC_SHA256 = 10900;           // PBKDF2-HMAC-SHA256
-  PBKDF2_HMAC_SHA512 = 12100;           // PBKDF2-HMAC-SHA512
-  SCRYPT = 8900;                        // scrypt
-  PHPASS = 400;                         // phpass
-  TACACS_PLUS = 16100;                  // TACACS+
-  SIP_DIGEST = 11400;                   // SIP digest authentication (MD5)
-  IKE_MD5 = 5300;                       // IKE-PSK MD5
-  IKE_SHA1 = 5400;                      // IKE-PSK SHA1
-  SNMP_V3_HMAC_MD5_96 = 25100;          // SNMPv3 HMAC-MD5-96
+  CHA_CHA_20 = 15400; // ChaCha20
+  LINUX_KERNEL_CRYPTO_API_24 = 14500; // Linux Kernel Crypto API (2.4)
+  SKIP_32 = 14900; // Skip32 (PT = $salt, key = $pass)
+  PBKDF2_HMAC_MD5 = 11900; // PBKDF2-HMAC-MD5
+  PBKDF2_HMAC_SHA1 = 12000; // PBKDF2-HMAC-SHA1
+  PBKDF2_HMAC_SHA256 = 10900; // PBKDF2-HMAC-SHA256
+  PBKDF2_HMAC_SHA512 = 12100; // PBKDF2-HMAC-SHA512
+  SCRYPT = 8900; // scrypt
+  PHPASS = 400; // phpass
+  TACACS_PLUS = 16100; // TACACS+
+  SIP_DIGEST = 11400; // SIP digest authentication (MD5)
+  IKE_MD5 = 5300; // IKE-PSK MD5
+  IKE_SHA1 = 5400; // IKE-PSK SHA1
+  SNMP_V3_HMAC_MD5_96 = 25100; // SNMPv3 HMAC-MD5-96
   SNMP_V3_HMAC_MD5_96__SHA1_96 = 25000; // SNMPv3 HMAC-MD5-96 / HMAC-SHA1-96
-  SNMP_V3_HMAC_SHA1_96 = 25200;         // SNMPv3 HMAC-SHA1-96
-  SNMP_V3_HMAC_SHA224_128 = 26700;      // SNMPv3 HMAC-SHA224-128
-  SNMP_V3_HMAC_SHA256_192 = 26800;      // SNMPv3 HMAC-SHA256-192
-  SNMP_V3_HMAC_SHA384_256 = 26900;      // SNMPv3 HMAC-SHA384-256
-  SNMP_V3_HMAC_SHA512_384 = 27300;      // SNMPv3 HMAC-SHA512-384
-  WPA_EAPOL_PBKDF2 = 2500;              // WPA-EAPOL-PBKDF2
-  WPA_EAPOL_PMK = 2501;                 // WPA-EAPOL-PMK
-  WPA_PBKDF2_PMKID_EAPOL = 22000;       // WPA-PBKDF2-PMKID+EAPOL
-  WPA_PMK_PMKID_EAPOL = 22001;          // WPA-PMK-PMKID+EAPOL
-  WPA_PMKID_PBKDF2 = 16800;             // WPA-PMKID-PBKDF2
-  WPA_PMKID_PMK = 16801;                // WPA-PMKID-PMK
-  IPMI2_PAKP_HMAC_SHA1 = 7300;          // IPMI2 RAKP HMAC-SHA1
-  CRAM_MD5 = 10200;                     // CRAM-MD5
-  JWT = 16500;                          // JWT (JSON Web Token)
-  RADMIN_3 = 29200;                     // Radmin3
-  KERBEROS_17_TGS_REP = 19600;          // Kerberos 5, etype 17, TGS-REP
-  KERBEROS_17_PREAUTH = 19800;          // Kerberos 5, etype 17, Pre-Auth
-  KERBEROS_17_DB = 28800;               // Kerberos 5, etype 17, DB
-  KERBEROS_18_TGS_REP = 19700;          // Kerberos 5, etype 18, TGS-REP
-  KERBEROS_18_PREAUTH = 19900;          // Kerberos 5, etype 18, Pre-Auth
-  KERBEROS_18_DB = 28900;               // Kerberos 5, etype 18, DB
-  KERBEROS_23_SA_REQ_PREAUTH = 7500;    // Kerberos 5, etype 23, AS-REQ Pre-Auth
-  KERBEROS_23_TGS_REP = 13100;          // Kerberos 5, etype 23, TGS-REP
-  KERBEROS_23_AS_REP = 18200;           // Kerberos 5, etype 23, AS-REP
-  NET_NTLM_V1 = 5500;                   // NetNTLMv1 / NetNTLMv1+ESS
-  NET_NTLM_V1_NT = 27000;               // NetNTLMv1 / NetNTLMv1+ESS (NT)
-  NET_NTLM_V2 = 5600;                   // NetNTLMv2
-  NET_NTLM_V2_NT = 27100;               // NetNTLMv2 (NT)
-  FLASK = 29100;     // Flask Session Cookie ($salt.$salt.$pass)
+  SNMP_V3_HMAC_SHA1_96 = 25200; // SNMPv3 HMAC-SHA1-96
+  SNMP_V3_HMAC_SHA224_128 = 26700; // SNMPv3 HMAC-SHA224-128
+  SNMP_V3_HMAC_SHA256_192 = 26800; // SNMPv3 HMAC-SHA256-192
+  SNMP_V3_HMAC_SHA384_256 = 26900; // SNMPv3 HMAC-SHA384-256
+  SNMP_V3_HMAC_SHA512_384 = 27300; // SNMPv3 HMAC-SHA512-384
+  WPA_EAPOL_PBKDF2 = 2500; // WPA-EAPOL-PBKDF2
+  WPA_EAPOL_PMK = 2501; // WPA-EAPOL-PMK
+  WPA_PBKDF2_PMKID_EAPOL = 22000; // WPA-PBKDF2-PMKID+EAPOL
+  WPA_PMK_PMKID_EAPOL = 22001; // WPA-PMK-PMKID+EAPOL
+  WPA_PMKID_PBKDF2 = 16800; // WPA-PMKID-PBKDF2
+  WPA_PMKID_PMK = 16801; // WPA-PMKID-PMK
+  IPMI2_PAKP_HMAC_SHA1 = 7300; // IPMI2 RAKP HMAC-SHA1
+  CRAM_MD5 = 10200; // CRAM-MD5
+  JWT = 16500; // JWT (JSON Web Token)
+  RADMIN_3 = 29200; // Radmin3
+  KERBEROS_17_TGS_REP = 19600; // Kerberos 5, etype 17, TGS-REP
+  KERBEROS_17_PREAUTH = 19800; // Kerberos 5, etype 17, Pre-Auth
+  KERBEROS_17_DB = 28800; // Kerberos 5, etype 17, DB
+  KERBEROS_18_TGS_REP = 19700; // Kerberos 5, etype 18, TGS-REP
+  KERBEROS_18_PREAUTH = 19900; // Kerberos 5, etype 18, Pre-Auth
+  KERBEROS_18_DB = 28900; // Kerberos 5, etype 18, DB
+  KERBEROS_23_SA_REQ_PREAUTH = 7500; // Kerberos 5, etype 23, AS-REQ Pre-Auth
+  KERBEROS_23_TGS_REP = 13100; // Kerberos 5, etype 23, TGS-REP
+  KERBEROS_23_AS_REP = 18200; // Kerberos 5, etype 23, AS-REP
+  NET_NTLM_V1 = 5500; // NetNTLMv1 / NetNTLMv1+ESS
+  NET_NTLM_V1_NT = 27000; // NetNTLMv1 / NetNTLMv1+ESS (NT)
+  NET_NTLM_V2 = 5600; // NetNTLMv2
+  NET_NTLM_V2_NT = 27100; // NetNTLMv2 (NT)
+  FLASK = 29100; // Flask Session Cookie ($salt.$salt.$pass)
   ISCSI_CHAP = 4800; // iSCSI CHAP authentication, MD5(CHAP)
   RACF = 8500;
   AIX_SMD5 = 6300;
   AIX_SSHA1 = 6700;
   AIX_SSHA256 = 6400;
   AIX_SSHA512 = 6500;
-  LM = 3000;                       // LM
-  QNX_MD5 = 19000;                 // QNX /etc/shadow (MD5)
-  QNX_SHA256 = 19100;              // QNX /etc/shadow (SHA256)
-  QNX_SHA512 = 19200;              // QNX /etc/shadow (SHA512)
-  DPAPI_V1_CTX_1_AND_2 = 15300;    // DPAPI masterkey file v1 (context 1 and 2)
-  DPAPI_V1_CTX_3 = 15310;          // DPAPI masterkey file v1 (context 3)
-  DPAPI_V2_CTX_1_AND_2 = 15900;    // DPAPI masterkey file v2 (context 1)
-  DPAPI_V2_CTX_3 = 15910;          // DPAPI masterkey file v2 (context 3)
-  GRUB_2 = 7200;                   // GRUB 2
-  MS_AZURE_SYNC = 12800;           // MS-AzureSync PBKDF2-HMAC-SHA256
-  BSDI_CRYPT = 12400;              // BSDi Crypt, Extended DES
-  NTLM = 1000;                     // NTLM
-  RADMIN2 = 9900;                  // Radmin2
-  SAMSUNG_ANDROID = 5800;          // Samsung Android Password/PIN
-  WINDOWS_HELLO_PIN = 28100;       // Windows Hello PIN/Password
-  WINDOWS_PHONE = 13800;           // Windows Phone 8+ PIN/Password
-  CISCO_ASA_MD5 = 2410;            // Cisco-ASA MD5
-  CISCO_IOS_PBKDF2_SHA256 = 9200;  // Cisco-IOS $8$ (PBKDF2-SHA256)
-  CISCO_IOS_SCRYPT = 9300;         // Cisco-IOS $9$ (scrypt)
-  CISCO_PIX_MD5 = 2400;            // Cisco-Pix MD5
-  CITRIX_NETSCALER_SHA1 = 8100;    // Citrix NetScaler (SHA1)
+  LM = 3000; // LM
+  QNX_MD5 = 19000; // QNX /etc/shadow (MD5)
+  QNX_SHA256 = 19100; // QNX /etc/shadow (SHA256)
+  QNX_SHA512 = 19200; // QNX /etc/shadow (SHA512)
+  DPAPI_V1_CTX_1_AND_2 = 15300; // DPAPI masterkey file v1 (context 1 and 2)
+  DPAPI_V1_CTX_3 = 15310; // DPAPI masterkey file v1 (context 3)
+  DPAPI_V2_CTX_1_AND_2 = 15900; // DPAPI masterkey file v2 (context 1)
+  DPAPI_V2_CTX_3 = 15910; // DPAPI masterkey file v2 (context 3)
+  GRUB_2 = 7200; // GRUB 2
+  MS_AZURE_SYNC = 12800; // MS-AzureSync PBKDF2-HMAC-SHA256
+  BSDI_CRYPT = 12400; // BSDi Crypt, Extended DES
+  NTLM = 1000; // NTLM
+  RADMIN2 = 9900; // Radmin2
+  SAMSUNG_ANDROID = 5800; // Samsung Android Password/PIN
+  WINDOWS_HELLO_PIN = 28100; // Windows Hello PIN/Password
+  WINDOWS_PHONE = 13800; // Windows Phone 8+ PIN/Password
+  CISCO_ASA_MD5 = 2410; // Cisco-ASA MD5
+  CISCO_IOS_PBKDF2_SHA256 = 9200; // Cisco-IOS $8$ (PBKDF2-SHA256)
+  CISCO_IOS_SCRYPT = 9300; // Cisco-IOS $9$ (scrypt)
+  CISCO_PIX_MD5 = 2400; // Cisco-Pix MD5
+  CITRIX_NETSCALER_SHA1 = 8100; // Citrix NetScaler (SHA1)
   CITRIX_NETSCALER_SHA512 = 22200; // Citrix NetScaler (SHA512)
-  DCC = 1100;                      // Domain Cached Credentials (DCC), MS Cache
+  DCC = 1100; // Domain Cached Credentials (DCC), MS Cache
   DCC2 = 2100; // Domain Cached Credentials 2 (DCC2), MS Cache 2
 
   // ...
@@ -1087,7 +1116,7 @@ enum HashType {
   INVALID = 9999; // Invalid hash type
 
   // Out of order
-  BCRYPT_UNIX = 3200;       // bcrypt
+  BCRYPT_UNIX = 3200; // bcrypt
   SHA512_CRYPT_UNIX = 1800; // sha512crypt $6$, SHA512 (Unix)
 }
 
@@ -1142,7 +1171,7 @@ message Crackstation {
   string ID = 1;
   string Name = 2;
   string OperatorName = 3;
-  string GOOS = 4;   // The cracker's OS
+  string GOOS = 4; // The cracker's OS
   string GOARCH = 5; // The cracker's Arch
   string HashcatVersion = 6;
   string HostUUID = 7;
@@ -1215,10 +1244,10 @@ enum CrackEncoding {
 
 enum CrackOutfileFormat {
   INVALID_FORMAT = 0;
-  HASH_SALT = 1;          // 1 | hash[:salt]
-  PLAIN = 2;              // 2 | plain
-  HEX_PLAIN = 3;          // 3 | hex_plain
-  CRACK_POS = 4;          // 4 | crack_pos
+  HASH_SALT = 1; // 1 | hash[:salt]
+  PLAIN = 2; // 2 | plain
+  HEX_PLAIN = 3; // 3 | hex_plain
+  CRACK_POS = 4; // 4 | crack_pos
   TIMESTAMP_ABSOLUTE = 5; // 5 | timestamp absolute
   TIMESTAMP_RELATIVE = 6; // 6 | timestamp relative
 }
@@ -1407,7 +1436,7 @@ message CrackFileChunk {
   bytes Data = 9;
 }
 
-// watchtower 
+// watchtower
 message MonitoringProviders {
   repeated MonitoringProvider providers = 1;
 }
@@ -1445,7 +1474,7 @@ message CertificateData {
 }
 
 message CertificateInfo {
-  repeated CertificateData info = 1;  
+  repeated CertificateData info = 1;
 }
 
 message CertificateAuthorityData {
